@@ -7,9 +7,10 @@ terraform {
   }
 }
 
-provider "aws" {
-    region = "eu-north-1"
+module "vpc" {
+  source = "./modules/vpc"
 }
+
 
 # Create a VPC
 resource "aws_vpc" "wordpress-vpc" {
@@ -19,3 +20,5 @@ resource "aws_vpc" "wordpress-vpc" {
         Name = "wordpress-vpc"
     }
 }
+
+#Create a subnet
