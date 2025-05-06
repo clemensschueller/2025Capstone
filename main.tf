@@ -7,20 +7,6 @@ terraform {
   }
 }
 
-# module "vpc" {
-#   source = "./modules/vpc"
-# }
-
-
-
-# Create a VPC
-resource "aws_vpc" "wordpress-vpc" {
-    cidr_block = "10.0.0.0/24"
-
-
-    tags = {
-        Name = "wordpress-vpc"
-    }
+module "vpc" {
+  source = "./modules/vpc"
 }
-
-#Create a subnet
