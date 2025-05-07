@@ -3,6 +3,11 @@ resource "aws_security_group" "ssh_sg" {
   name   = "wordpress-ssh-sg"
   vpc_id = module.vpc.vpc_id
   description = "Allow SSH access to EC2 instances"
+
+  tags = {
+    Name              = "SSH_SG"
+    SecurityGroupName = "SSH_SG"
+  }
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ssh_sg_rule" {
@@ -25,10 +30,11 @@ resource "aws_vpc_security_group_egress_rule" "ssh_sg_rule_egress" {
 resource "aws_security_group" "webserver_sg" {
   name   = "Capstone-WebServer-SG"
   vpc_id = module.vpc.vpc_id
+  description = "HTTP & HTTPS traffic"
 
   tags = {
     Name              = "WordpressWebServerSG"
-    SecurityGroupName = "WordpressWebServerS"
+    SecurityGroupName = "WordpressWebServerSG"
   }
 }
 
