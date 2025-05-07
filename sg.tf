@@ -1,7 +1,7 @@
 # Security Group for SSH Admin Access
 resource "aws_security_group" "ssh_sg" {
   name   = "wordpress-ssh-sg"
-  vpc_id = aws_vpc.this.id
+  vpc_id = module.vpc.vpc_id
   description = "Allow SSH access to EC2 instances"
 }
 
@@ -24,7 +24,7 @@ resource "aws_vpc_security_group_egress_rule" "ssh_sg_rule_egress" {
 # Security Group for HTTP & HTTPS
 resource "aws_security_group" "webserver_sg" {
   name   = "Capstone-WebServer-SG"
-  vpc_id = aws_vpc.this.id
+  vpc_id = module.vpc.vpc_id
 
   tags = {
     Name              = "WordpressWebServerSG"
