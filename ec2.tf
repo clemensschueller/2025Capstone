@@ -2,7 +2,7 @@
 resource "aws_instance" "wordpress_primary" {
   ami                    = "ami-0d1bf5b68307103c2"  # Amazon Linux 2 in eu-central-1
   instance_type          = "t2.micro"
-  subnet_id              = module.vpc.aws_subnet.public_1.id  # Erstes Public Subnet (eu-central-1a)
+  subnet_id              = module.vpc.public_subnet_ids[0].id  # Erstes Public Subnet (eu-central-1a)
   vpc_security_group_ids = [
     aws_security_group.ssh_sg.id,
     aws_security_group.webserver_sg.id
