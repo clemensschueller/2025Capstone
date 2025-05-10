@@ -1,7 +1,7 @@
 # RDS Subnet Group
 resource "aws_db_subnet_group" "wordpress" {
   name       = "wordpress-db-subnet-group"
-  subnet_ids = [module.vpc.aws_subnet.private_1.id, module.vpc.aws_subnet.private_2.id] # Using both private subnets for high availability
+  subnet_ids = [module.vpc.private_subnet_ids[0], module.vpc.private_subnet_ids[1]] # Using both private subnets for high availability
 
   tags = {
     Name = "WordPress DB Subnet Group"

@@ -12,14 +12,14 @@ resource "aws_eip" "nat" {
 resource "aws_nat_gateway" "main" {
   count         = var.create_nat_gateway ? 1 : 0
   allocation_id = aws_eip.nat[0].id
-  subnet_id     = module.vps.aws_subnet.public_1.id # Place in same AZ as Wordpress EC2 instance
+  subnet_id     = module.vpc.aws_subnet.public_1.id # Place in same AZ as Wordpress EC2 instance
 
   tags = {
     Name = "wordpress-nat-gateway"
   }
 
   # To ensure proper ordering
-  depends_on = [module.vpc.aws_internet_gateway.main]
+  depends_on = [module.vpc.igw_id]
 }
 
 # Update Private Route Table to route through NAT Gateway
