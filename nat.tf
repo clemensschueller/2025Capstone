@@ -24,6 +24,7 @@ resource "aws_nat_gateway" "main" {
 
 # Update Private Route Table to route through NAT Gateway
 resource "aws_route" "private_nat_gateway" {
+  count                  = var.create_nat_gateway ? 1 : 0
   route_table_id         = module.vpc.private_route_table_id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.main[0].id
