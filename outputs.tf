@@ -12,3 +12,8 @@ output "rds_endpoint" {
 output "database_name" {
   value = aws_db_instance.wordpress.db_name
 }
+
+# Output NAT Gateway status
+output "nat_gateway_status" {
+  value = var.create_nat_gateway ? "ACTIVE - Costing approximately $0.045/hour + data transfer" : "DISABLED - No costs incurred"
+}
