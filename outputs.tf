@@ -2,3 +2,13 @@
 output "public_ip" {
   value = aws_instance.wordpress_primary.public_ip
 }
+
+# Output the RDS endpoint
+output "rds_endpoint" {
+  value = aws_db_instance.wordpress.endpoint
+}
+
+# Output the database name
+output "database_name" {
+  value = aws_db_instance.wordpress.db_name
+}
