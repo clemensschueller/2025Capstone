@@ -18,7 +18,7 @@ resource "aws_db_instance" "wordpress" {
   identifier             = "wordpress-mysql"
   db_name                = "wordpressdb"
   username               = "admin"
-  password               = "Password123!" # In production, use aws_secretsmanager_secret or similar
+  password               = "Admin123!" # In production, use aws_secretsmanager_secret or similar
   parameter_group_name   = aws_db_parameter_group.wordpress.name
   db_subnet_group_name   = aws_db_subnet_group.wordpress.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
