@@ -10,7 +10,7 @@
 
 resource "aws_instance" "wordpress_primary" {
   ami                    = "ami-085386e29e44dacd7"
-  instance_type          = "t2.micro"
+  instance_type          = var.ec2_instance_type_t2micro
   subnet_id              = module.vpc.public_subnet_ids[0]  
   vpc_security_group_ids = [
     aws_security_group.ssh_sg.id,
