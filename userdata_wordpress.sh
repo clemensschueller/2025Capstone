@@ -13,7 +13,7 @@ sudo yum install mariadb105-server -y
 sudo systemctl start mariadb
 sudo systemctl enable mariadb
 
-# Automate mysql_secure_installation (not the best solution)
+# Automate mysql_secure_installation (passwords need to be stored elsewhere)
 expect <<EOF
 spawn mysql_secure_installation
 expect "Enter current password for root (enter for none):"
@@ -45,7 +45,17 @@ EXIT;
 MYSQL_SCRIPT
 
 # Install PHP and all necessary modules
-sudo yum install php php-mysqlnd php-fpm php-xml php-mbstring -y
+# Install EPEL and REMI repositories
+sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sudo yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+
+# Enable PHP 7.4 repository
+sudo yum-config-manager --enable remi-php74
+
+# Install PHP 7.4 and necessary modules
+sudo yum install -y php php-mysqlnd php-fpm php-json php-gd php-curl php-xml php-mbstring php-opcache php-zip
+
+# Restart Apache to load PHP
 sudo systemctl restart httpd
 
 # Download and extract WordPress
