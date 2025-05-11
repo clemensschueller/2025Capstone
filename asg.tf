@@ -10,7 +10,7 @@ resource "aws_launch_template" "wordpress" {
     aws_security_group.webserver_sg.id
   ]
 
-  user_data = filebase64("userdata_wordpress.sh")
+  user_data = filebase64("user_data.sh")
 
   block_device_mappings {
     device_name = "/dev/xvda"
