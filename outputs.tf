@@ -22,3 +22,8 @@ output "nat_gateway_status" {
 output "alb_dns_name" {
   value = aws_lb.wordpress.dns_name
 }
+
+# Output the Auto Scaling Group name
+output "asg_name" {
+  value = aws_autoscaling_group.wordpress.name
+}
