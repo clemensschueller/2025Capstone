@@ -25,5 +25,5 @@ output "alb_dns_name" {
 
 # Output the Auto Scaling Group name
 output "asg_name" {
-  value = aws_autoscaling_group.wordpress.name
+  value = aws_autoscaling_group.wp-autoscaling-group.name
 }
