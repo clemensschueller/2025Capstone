@@ -23,7 +23,7 @@ resource "aws_db_instance" "wordpress" {
   db_subnet_group_name   = aws_db_subnet_group.wordpress.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot    = true
-  publicly_accessible    = false
+  publicly_accessible    = true
   multi_az               = false # Set to true for production
   storage_encrypted      = false # Set true for better security in production
 

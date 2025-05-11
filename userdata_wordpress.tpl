@@ -27,6 +27,20 @@ sed -i "s/username_here/admin/" wp-config.php
 sed -i "s/password_here/Admin123!/" wp-config.php
 sed -i "s/localhost/${rds_endpoint}/" wp-config.php
 
+# FIXING CONNECTION BUG
+# Add this after the wp-config.php setup and before the WP-CLI installation
+# Debug database connection
+echo "==== DATABASE CONNECTION DEBUGGING ====" >> /var/log/wordpress_debug.log
+echo "RDS Endpoint: ${rds_endpoint}" >> /var/log/wordpress_debug.log
+echo "Testing connection to database..." >> /var/log/wordpress_debug.log
+yum install -y nc
+echo "Checking if port 3306 is reachable..." >> /var/log/wordpress_debug.log
+nc -zv ${rds_endpoint} 3306 >> /var/log/wordpress_debug.log 2>&1
+echo "Trying to connect to MySQL..." >> /var/log/wordpress_debug.log
+mysql -h ${rds_endpoint} -u admin -p'Admin123!' -e "SHOW DATABASES;" >> /var/log/wordpress_debug.log 2>&1
+echo "==== END DATABASE DEBUGGING ====" >> /var/log/wordpress_debug.log
+
+
 # Generate unique keys and salts (important for security)
 SALT=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
 SALT=$(echo "$SALT" | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/&/\\\&/g')
@@ -48,7 +62,7 @@ mv wp-cli.phar /usr/local/bin/wp
 # Install WordPress with the actual server IP instead of localhost
 cd /var/www/html
 wp core install \
-  --url="http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)" \
+  --url="http://wordpress-alb-256857662.us-east-1.elb.amazonaws.com" \
   --title="Capstone Project" \
   --admin_user=admin \
   --admin_password=Test123# \
