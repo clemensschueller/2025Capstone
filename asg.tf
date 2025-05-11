@@ -10,7 +10,9 @@ resource "aws_launch_template" "wordpress" {
     aws_security_group.webserver_sg.id
   ]
 
-  user_data = filebase64("user_data.sh")
+  user_data = base64encode(templatefile("${path.module}/userdata_wordpress.tpl", {
+    rds_endpoint = aws_db_instance.wordpress.endpoint
+  }))
 
   block_device_mappings {
     device_name = "/dev/xvda"
