@@ -17,3 +17,8 @@ output "database_name" {
 output "nat_gateway_status" {
   value = var.create_nat_gateway ? "ACTIVE - Costing approximately $0.045/hour + data transfer" : "DISABLED - No costs incurred"
 }
+
+# Output the ALB DNS name
+output "alb_dns_name" {
+  value = aws_lb.wordpress.dns_name
+}
