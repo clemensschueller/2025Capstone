@@ -24,7 +24,7 @@ rm -rf wordpress latest.tar.gz
 cp wp-config-sample.php wp-config.php
 sed -i "s/database_name_here/wordpressdb/" wp-config.php
 sed -i "s/username_here/admin/" wp-config.php
-sed -i "s/password_here/Password123!/" wp-config.php
+sed -i "s/password_here/Admin123!/" wp-config.php
 sed -i "s/localhost/${rds_endpoint}/" wp-config.php
 
 # Generate unique keys and salts (important for security)

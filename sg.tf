@@ -73,7 +73,8 @@ resource "aws_security_group" "rds_sg" {
 resource "aws_vpc_security_group_ingress_rule" "rds_sg_rule" {
   security_group_id = aws_security_group.webserver_sg.id
 
-  cidr_ipv4   = "0.0.0.0/0"
+  referenced_security_group_id = aws_security_group.webserver_sg.id
+  # cidr_ipv4   = "0.0.0.0/0" allow only from webserver sg
   from_port   = 3306
   ip_protocol = "tcp"
   to_port     = 3306
