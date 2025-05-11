@@ -38,15 +38,8 @@ sed -i "/Put your unique phrase here/a $SALT" wp-config.php
 chown -R apache:apache /var/www/html
 chmod -R 755 /var/www/html
 
-# Clone GitHub repo (capstone-project)
-cd /home/ec2-user
-git clone https://github.com/emrekaraat/capstone-project.git
-
 # Create themes directory if it doesn't exist
 mkdir -p /var/www/html/wp-content/themes/twentytwentyfive
-
-# Copy page template
-cp /home/ec2-user/capstone-project/assets/wordpress-content/wp-content/themes/emre-theme/page-myproject.php /var/www/html/wp-content/themes/twentytwentyfive/
 
 # Install WP-CLI
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
