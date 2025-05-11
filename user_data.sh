@@ -1,67 +1,78 @@
 #!/bin/bash
-set -x  # Debug-Modus aktivieren
 
-# 1. Apache-Testseite DEAKTIVIEREN (kritisch!)
-sudo sed -i 's/^/#/' /etc/httpd/conf.d/welcome.conf  # Kommentiert die Testseite aus
+# Update system packages
+yum update -y
 
-# 2. Alte Inhalte löschen
-sudo rm -rf /var/www/html/*
+# Install Apache
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
 
-# 3. System aktualisieren
-sudo yum update -y
-sudo amazon-linux-extras enable -y php8.2 mariadb10.5
-sudo yum install -y httpd mariadb-server php php-{mysqlnd,gd,mbstring,xml,json,curl}
+# Install PHP and required extensions
+amazon-linux-extras enable php8.2
+yum clean metadata
+# Added php-json and php-gd which WordPress needs
+yum install -y php php-mysqlnd php-fpm php-xml php-mbstring php-cli php-json php-gd unzip git
 
-# 4. Dienste starten
-sudo systemctl start httpd mariadb
-sudo systemctl enable httpd mariadb
-
-# 5. WordPress herunterladen
-cd /tmp
+# Download and extract WordPress
+cd /var/www/html
 wget https://wordpress.org/latest.tar.gz
 tar -xzf latest.tar.gz
-sudo mv wordpress/* /var/www/html/
+cp -r wordpress/* .
+rm -rf wordpress latest.tar.gz
 
-# 6. Berechtigungen setzen
-sudo chown -R apache:apache /var/www/html
-sudo find /var/www/html -type d -exec chmod 755 {} \;
-sudo find /var/www/html -type f -exec chmod 644 {} \;
+# Configure wp-config.php with hardcoded credentials instead of undefined variables
+cp wp-config-sample.php wp-config.php
+sed -i "s/database_name_here/wordpressdb/" wp-config.php
+sed -i "s/username_here/admin/" wp-config.php
+sed -i "s/password_here/Password123!/" wp-config.php
+sed -i "s/localhost/rds-db.cxxxxxxxxxxx.us-east-1.rds.amazonaws.com/" wp-config.php
 
-# 7. Datenbank einrichten
-sudo mysql <<EOF
-CREATE DATABASE wordpress;
-CREATE USER 'wp_user'@'localhost' IDENTIFIED BY 'admin123';
-GRANT ALL PRIVILEGES ON wordpress.* TO 'wp_user'@'localhost';
-FLUSH PRIVILEGES;
-EOF
+# Generate unique keys and salts (important for security)
+SALT=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
+SALT=$(echo "$SALT" | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/&/\\\&/g')
+sed -i "/define( 'AUTH_KEY'/,/define( 'NONCE_SALT'/d" wp-config.php
+sed -i "/Put your unique phrase here/a $SALT" wp-config.php
 
-# 8. wp-config anpassen
+# Set permissions
+chown -R apache:apache /var/www/html
+chmod -R 755 /var/www/html
+
+# Clone GitHub repo (capstone-project)
+cd /home/ec2-user
+git clone https://github.com/emrekaraat/capstone-project.git
+
+# Create themes directory if it doesn't exist
+mkdir -p /var/www/html/wp-content/themes/twentytwentyfive
+
+# Copy page template
+cp /home/ec2-user/capstone-project/assets/wordpress-content/wp-content/themes/emre-theme/page-myproject.php /var/www/html/wp-content/themes/twentytwentyfive/
+
+# Install WP-CLI
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+chmod +x wp-cli.phar
+mv wp-cli.phar /usr/local/bin/wp
+
+# Install WordPress with the actual server IP instead of localhost
 cd /var/www/html
-sudo cp wp-config-sample.php wp-config.php
-sudo sed -i "
-  s/database_name_here/wordpress/;
-  s/username_here/wp_user/;
-  s/password_here/admin123/
-" wp-config.php
+wp core install \
+  --url="http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)" \
+  --title="Capstone Project" \
+  --admin_user=admin \
+  --admin_password=Test123# \
+  --admin_email="admin@example.com" \
+  --skip-email \
+  --allow-root
 
-# 9. Apache KORREKT konfigurieren
-sudo tee /etc/httpd/conf.d/wordpress.conf > /dev/null <<EOF
-<VirtualHost *:80>
-    DocumentRoot /var/www/html
-    <Directory "/var/www/html">
-        AllowOverride All
-        DirectoryIndex index.php
-        Require all granted
-    </Directory>
-</VirtualHost>
-EOF
+# Activate default theme
+wp theme activate twentytwentyfive --allow-root
 
-# 10. Apache NEUSTARTEN (absolut kritisch)
-sudo systemctl restart httpd
+# Restart Apache
+systemctl restart httpd
 
-# Erfolgsmeldung
+# Success message
 IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-echo "WORDPRESS ERFOLGREICH INSTALLIERT! Zugriff unter: http://$IP"
-echo "Falls du die Testseite siehst:"
-echo "1. Browser-Cache leeren (Strg+F5)"
-echo "2. Sicherstellen, dass Port 80 in der Security Group offen ist"
+echo "WORDPRESS SUCCESSFULLY INSTALLED! Access at: http://$IP"
+echo "If you see the test page:"
+echo "1. Clear browser cache (Ctrl+F5)"
+echo "2. Make sure port 80 is open in the security group"
