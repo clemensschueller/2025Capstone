@@ -1,3 +1,3 @@
 provider "aws" {
-  region = var.region_us_east_1
+  region = var.region_us_west_2
 }
