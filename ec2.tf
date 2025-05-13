@@ -21,7 +21,7 @@ resource "aws_instance" "wordpress_primary" {
   ]
   associate_public_ip_address = true
   key_name                    = "vockey"
-  user_data                   = filebase64("user_data.sh") # Path to Script
+  user_data                   = file("user_data.sh") # Path to Script
 
   tags = {
     Name = "WordPress-Primary"
