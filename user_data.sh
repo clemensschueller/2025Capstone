@@ -1,71 +1,78 @@
 #!/bin/bash
 
 # Update system packages
-yum update -y
+sudo yum update -y
 
-# Install Apache
-yum install -y httpd
-systemctl start httpd
-systemctl enable httpd
+# Install httpd (webserver), start and enable it
+sudo yum install httpd -y
+sudo systemctl start httpd
+sudo systemctl enable httpd
 
-# Install PHP and required extensions
-amazon-linux-extras enable php8.2
-yum clean metadata
-# Added php-json and php-gd which WordPress needs
-yum install -y php php-mysqlnd php-fpm php-xml php-mbstring php-cli php-json php-gd unzip git
+# Install MariaDB, start and enable it
+sudo yum install mariadb105-server -y
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
+
+# Automate mysql_secure_installation (not the best solution)
+expect <<EOF
+spawn mysql_secure_installation
+expect "Enter current password for root (enter for none):"
+send "\n"
+expect "Set root password? [Y/n]"
+send "Y\n"
+expect "New password:"
+send "root\n"  # Set your desired root password here
+expect "Re-enter new password:"
+send "root\n"  # Re-enter the root password
+expect "Remove anonymous users? [Y/n]"
+send "Y\n"
+expect "Disallow root login remotely? [Y/n]"
+send "Y\n"
+expect "Remove test database and access to it? [Y/n]"
+send "Y\n"
+expect "Reload privilege tables now? [Y/n]"
+send "Y\n"
+expect eof
+EOF
+
+# Log in to mariadb and create WordPress database and user
+mysql -u root -proot <<MYSQL_SCRIPT
+CREATE DATABASE wordpress;
+CREATE USER 'wp_user'@'localhost' IDENTIFIED BY 'admin123';  # Replace with actual password
+GRANT ALL PRIVILEGES ON wordpress.* TO 'wp_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+MYSQL_SCRIPT
+
+# Install PHP and all necessary modules
+sudo yum install php php-mysqlnd php-fpm php-xml php-mbstring -y
+sudo systemctl restart httpd
 
 # Download and extract WordPress
-cd /var/www/html
 wget https://wordpress.org/latest.tar.gz
-tar -xzf latest.tar.gz
-cp -r wordpress/* .
-rm -rf wordpress latest.tar.gz
+tar -xvzf latest.tar.gz
 
-# Configure wp-config.php with hardcoded credentials instead of undefined variables
-cp wp-config-sample.php wp-config.php
-sed -i "s/database_name_here/wordpressdb/" wp-config.php
-sed -i "s/username_here/admin/" wp-config.php
-sed -i "s/password_here/Password123!/" wp-config.php
-sed -i "s/localhost/rds-db.cxxxxxxxxxxx.us-east-1.rds.amazonaws.com/" wp-config.php
+# Move WordPress files to the Apache web directory
+sudo mv wordpress/* /var/www/html/
+sudo rm -f /var/www/html/index.html
 
-# Generate unique keys and salts (important for security)
-SALT=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
-SALT=$(echo "$SALT" | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/&/\\\&/g')
-sed -i "/define( 'AUTH_KEY'/,/define( 'NONCE_SALT'/d" wp-config.php
-sed -i "/Put your unique phrase here/a $SALT" wp-config.php
+# Set correct ownership and permissions
+sudo chown -R apache:apache /var/www/html/*
+sudo chmod -R 755 /var/www/html/*
 
-# Set permissions
-chown -R apache:apache /var/www/html
-chmod -R 755 /var/www/html
-
-# Create themes directory if it doesn't exist
-mkdir -p /var/www/html/wp-content/themes/twentytwentyfive
-
-# Install WP-CLI
-curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-chmod +x wp-cli.phar
-mv wp-cli.phar /usr/local/bin/wp
-
-# Install WordPress with the actual server IP instead of localhost
+# Create wp-config.php file
 cd /var/www/html
-wp core install \
-  --url="http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)" \
-  --title="Capstone Project" \
-  --admin_user=admin \
-  --admin_password=Test123# \
-  --admin_email="admin@example.com" \
-  --skip-email \
-  --allow-root
+sudo cp wp-config-sample.php wp-config.php
 
-# Activate default theme
-wp theme activate twentytwentyfive --allow-root
+# Automate wp-config.php with database credentials
+sudo sed -i "s/define( 'DB_NAME', 'database_name_here' );/define( 'DB_NAME', 'wordpress' );/" wp-config.php
+sudo sed -i "s/define( 'DB_USER', 'username_here' );/define( 'DB_USER', 'wp_user' );/" wp-config.php
+sudo sed -i "s/define( 'DB_PASSWORD', 'password_here' );/define( 'DB_PASSWORD', 'admin123' );/" wp-config.php
 
-# Restart Apache
-systemctl restart httpd
+# Set permissions for wp-config.php
+sudo chmod 644 wp-config.php
 
-# Success message
-IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-echo "WORDPRESS SUCCESSFULLY INSTALLED! Access at: http://$IP"
-echo "If you see the test page:"
-echo "1. Clear browser cache (Ctrl+F5)"
-echo "2. Make sure port 80 is open in the security group"
+# Restart Apache to ensure everything is loaded
+sudo systemctl restart httpd
+
+echo "WordPress installation is complete!" # just print a message
