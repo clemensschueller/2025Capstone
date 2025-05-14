@@ -1,18 +1,23 @@
-# # EC2 Instance
-# data "aws_ami" "amazon_linux_2" {
-#   most_recent = true
-#   owners      = ["amazon"]
+# EC2 Instance
+data "aws_ami" "amazon_linux_2023" {
+  most_recent = true
+  owners      = ["amazon"]
 
-#   filter {
-#     name   = "name"
-#     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-#   }
-# }
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*-x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
 
 # Primary WordPress Instance
 # hardcode ami "ami-04999cd8f2624f834"
 resource "aws_instance" "wordpress_primary" {
-  ami           = "ami-04999cd8f2624f834"
+  ami           = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_instance_type_t2micro
   subnet_id     = module.vpc.public_subnet_ids[0]
   vpc_security_group_ids = [
