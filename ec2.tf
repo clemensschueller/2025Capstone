@@ -12,7 +12,7 @@
 # Primary WordPress Instance
 # hardcode ami ami-0c0ba4e76e4392ce9
 resource "aws_instance" "wordpress_primary" {
-  ami           = "ami-0c0ba4e76e4392ce9"
+  ami           = "ami-04999cd8f2624f834"
   instance_type = var.ec2_instance_type_t2micro
   subnet_id     = module.vpc.public_subnet_ids[0]
   vpc_security_group_ids = [
