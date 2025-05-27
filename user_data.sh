@@ -13,6 +13,15 @@ sudo yum install mariadb105-server -y
 sudo systemctl start mariadb
 sudo systemctl enable mariadb
 
+# Generate secure random passwords
+DB_ROOT_PASSWORD=$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9')
+DB_WP_PASSWORD=$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9')
+
+# Store passwords securely
+echo "DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}" > /root/.db_credentials
+echo "DB_WP_PASSWORD=${DB_WP_PASSWORD}" >> /root/.db_credentials
+chmod 600 /root/.db_credentials
+
 # Automate mysql_secure_installation (not the best solution)
 expect <<EOF
 spawn mysql_secure_installation
@@ -21,9 +30,9 @@ send "\n"
 expect "Set root password? [Y/n]"
 send "Y\n"
 expect "New password:"
-send "root\n"  # Set your desired root password here
+send "${DB_ROOT_PASSWORD}\n"
 expect "Re-enter new password:"
-send "root\n"  # Re-enter the root password
+send "${DB_ROOT_PASSWORD}\n"
 expect "Remove anonymous users? [Y/n]"
 send "Y\n"
 expect "Disallow root login remotely? [Y/n]"
@@ -36,9 +45,9 @@ expect eof
 EOF
 
 # Log in to mariadb and create WordPress database and user
-mysql -u root -proot <<MYSQL_SCRIPT
+mysql -u root -p${DB_ROOT_PASSWORD} <<MYSQL_SCRIPT
 CREATE DATABASE wordpress;
-CREATE USER 'wp_user'@'localhost' IDENTIFIED BY 'admin123';  # Replace with actual password
+CREATE USER 'wp_user'@'localhost' IDENTIFIED BY '${DB_WP_PASSWORD}';
 GRANT ALL PRIVILEGES ON wordpress.* TO 'wp_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
@@ -67,7 +76,7 @@ sudo cp wp-config-sample.php wp-config.php
 # Automate wp-config.php with database credentials
 sudo sed -i "s/define( 'DB_NAME', 'database_name_here' );/define( 'DB_NAME', 'wordpress' );/" wp-config.php
 sudo sed -i "s/define( 'DB_USER', 'username_here' );/define( 'DB_USER', 'wp_user' );/" wp-config.php
-sudo sed -i "s/define( 'DB_PASSWORD', 'password_here' );/define( 'DB_PASSWORD', 'admin123' );/" wp-config.php
+sudo sed -i "s/define( 'DB_PASSWORD', 'password_here' );/define( 'DB_PASSWORD', '${DB_WP_PASSWORD}' );/" wp-config.php
 
 # Set permissions for wp-config.php
 sudo chmod 644 wp-config.php
@@ -75,4 +84,5 @@ sudo chmod 644 wp-config.php
 # Restart Apache to ensure everything is loaded
 sudo systemctl restart httpd
 
-echo "WordPress installation is complete!" # just print a message
+echo "WordPress installation is complete!"
+echo "Database credentials are stored in /root/.db_credentials"
